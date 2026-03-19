@@ -1,1 +1,55 @@
+pip install paho-mqtt
+import paho.mqtt.client as mqtt
+import json
+import time
+import random
 
+broker = "test.mosquitto.org"   # Free public broker
+topic = "air/quality"
+
+client = mqtt.Client()
+client.connect(broker, 1883, 60)
+
+while True:
+    data = {
+        "city": "Hyderabad",
+        "aqi": random.randint(50, 200),
+        "co": round(random.uniform(0.1, 1.0), 2),
+        "no2": random.randint(10, 50),
+        "so2": random.randint(5, 20)
+    }
+
+    message = json.dumps(data)
+    client.publish(topic, message)
+
+    print("Sent:", message)
+
+    time.sleep(3)
+import paho.mqtt.client as mqtt
+
+broker = "test.mosquitto.org"
+topic = "air/quality"
+
+def on_connect(client, userdata, flags, rc):
+    print("Connected to broker")
+    client.subscribe(topic)
+
+def on_message(client, userdata, msg):
+    print("Received:", msg.payload.decode())
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+
+client.connect(broker, 1883, 60)
+
+client.loop_forever()
+Sent: {"city":"Hyderabad","aqi":120,"co":0.45,"no2":30,"so2":10}
+Received: {"city":"Hyderabad","aqi":120,"co":0.45,"no2":30,"so2":10}
+import requests
+
+def on_message(client, userdata, msg):
+    data = msg.payload.decode()
+    print("Received:", data)
+
+    requests.post("http://127.0.0.1:8000/add-air-data", json=json.loads(data))
