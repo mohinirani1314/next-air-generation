@@ -1,1 +1,85 @@
+pip install pandas numpy matplotlib
+# ==========================================
+# 🌍 Air Quality Analysis (Pandas + NumPy)
+# ==========================================
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------
+# 🔹 Sample Dataset (can replace with CSV)
+# ------------------------------
+data = {
+    "city": ["Hyderabad", "Chennai", "Bangalore", "Hyderabad", "Chennai"],
+    "aqi": [120, 90, 80, 150, 110],
+    "co": [0.5, 0.3, 0.2, 0.7, 0.4],
+    "no2": [30, 20, 15, 40, 25],
+    "so2": [10, 8, 5, 12, 9]
+}
+
+df = pd.DataFrame(data)
+
+print("📊 Original Data:\n", df)
+
+# ------------------------------
+# 🔹 Basic Statistics
+# ------------------------------
+print("\n📈 Mean AQI:", np.mean(df["aqi"]))
+print("📉 Min AQI:", np.min(df["aqi"]))
+print("📊 Max AQI:", np.max(df["aqi"]))
+
+# ------------------------------
+# 🔹 Group By City
+# ------------------------------
+grouped = df.groupby("city")["aqi"].mean()
+print("\n📊 Average AQI by City:\n", grouped)
+
+# ------------------------------
+# 🔹 Add AQI Category
+# ------------------------------
+def categorize_aqi(aqi):
+    if aqi <= 50:
+        return "Good"
+    elif aqi <= 100:
+        return "Moderate"
+    else:
+        return "Poor"
+
+df["category"] = df["aqi"].apply(categorize_aqi)
+
+print("\n📊 Data with Category:\n", df)
+
+# ------------------------------
+# 🔹 Filter High Pollution
+# ------------------------------
+high_pollution = df[df["aqi"] > 100]
+print("\n⚠️ High Pollution Areas:\n", high_pollution)
+
+# ------------------------------
+# 🔹 Correlation Matrix
+# ------------------------------
+print("\n🔗 Correlation:\n", df.corr(numeric_only=True))
+
+# ------------------------------
+# 🔹 Visualization
+# ------------------------------
+grouped.plot(kind="bar")
+plt.title("Average AQI by City")
+plt.xlabel("City")
+plt.ylabel("AQI")
+plt.show()
+Mean AQI: 110
+Min AQI: 80
+Max AQI: 150
+Hyderabad    135
+Chennai      100
+Bangalore     80
+Hyderabad 150
+Hyderabad 120
+Chennai 110
+df = pd.read_csv("air_quality.csv")
+df.to_csv("cleaned_data.csv", index=False)
+trend = np.polyfit(range(len(df)), df["aqi"], 1)
+print("Trend:", trend)
+FastAPI → Database → Pandas Analysis → Chart.js Dashboard
