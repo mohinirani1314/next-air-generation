@@ -1,1 +1,151 @@
+pip install fastapi uvicorn requests mysql-connector-python
+CREATE DATABASE HealthAirDB;
+
+USE HealthAirDB;
+
+CREATE TABLE AirQuality (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    city VARCHAR(50),
+    aqi INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE HealthAlerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    city VARCHAR(50),
+    aqi INT,
+    alert_message VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+from fastapi import FastAPI
+import mysql.connector
+import requests
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# -------------------------------
+# 🔹 Database Connection
+# -------------------------------
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="HealthAirDB"
+)
+
+cursor = db.cursor(dictionary=True)
+
+# -------------------------------
+# 🔹 Models
+# -------------------------------
+class AirData(BaseModel):
+    city: str
+    aqi: int
+
+
+# -------------------------------
+# 🔹 Health Alert Logic
+# -------------------------------
+def generate_alert(aqi):
+    if aqi <= 50:
+        return "Good air quality"
+    elif aqi <= 100:
+        return "Moderate air quality"
+    elif aqi <= 150:
+        return "Unhealthy for sensitive groups"
+    else:
+        return "Hazardous air quality ⚠️"
+
+
+# -------------------------------
+# 🔹 1. Add Air Data
+# -------------------------------
+@app.post("/add-air-data")
+def add_air_data(data: AirData):
+    sql = "INSERT INTO AirQuality (city, aqi) VALUES (%s, %s)"
+    cursor.execute(sql, (data.city, data.aqi))
+    db.commit()
+
+    # Generate health alert
+    alert = generate_alert(data.aqi)
+
+    cursor.execute(
+        "INSERT INTO HealthAlerts (city, aqi, alert_message) VALUES (%s, %s, %s)",
+        (data.city, data.aqi, alert)
+    )
+    db.commit()
+
+    return {"message": "Data added", "alert": alert}
+
+
+# -------------------------------
+# 🔹 2. Get Air Data
+# -------------------------------
+@app.get("/air-data")
+def get_air_data():
+    cursor.execute("SELECT * FROM AirQuality")
+    return cursor.fetchall()
+
+
+# -------------------------------
+# 🔹 3. Get Health Alerts
+# -------------------------------
+@app.get("/health-alerts")
+def get_alerts():
+    cursor.execute("SELECT * FROM HealthAlerts")
+    return cursor.fetchall()
+
+
+# -------------------------------
+# 🔹 4. External API Integration
+# (Fetch real AQI data)
+# -------------------------------
+@app.get("/external-aqi/{city}")
+def get_external_aqi(city: str):
+    api_key = "YOUR_API_KEY"
+
+    url = f"http://api.openweathermap.org/data/2.5/air_pollution?q={city}&appid={api_key}"
+
+    response = requests.get(url)
+    data = response.json()
+
+    return data
+
+
+# -------------------------------
+# 🔹 5. Public Health Summary
+# -------------------------------
+@app.get("/health-summary/{city}")
+def health_summary(city: str):
+    cursor.execute("SELECT AVG(aqi) as avg_aqi FROM AirQuality WHERE city=%s", (city,))
+    result = cursor.fetchone()
+
+    avg_aqi = result["avg_aqi"] if result["avg_aqi"] else 0
+    alert = generate_alert(avg_aqi)
+
+    return {
+        "city": city,
+        "average_aqi": avg_aqi,
+        "health_status": alert
+    }
+
+
+# -------------------------------
+# 🔹 Root
+# -------------------------------
+@app.get("/")
+def home():
+    return {"message": "Public Health Air Quality API Running 🚀"}
+uvicorn main:app --reload
+http://127.0.0.1:8000/docs
+POST /add-air-data
+{
+  "city": "Hyderabad",
+  "aqi": 160
+}
+{
+  "message": "Data added",
+  "alert": "Hazardous air quality ⚠️"
+}
 
