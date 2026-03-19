@@ -1,1 +1,23 @@
+ssh -i your-key.pem ubuntu@your-ec2-public-ip
+sudo apt update
+sudo apt install python3-pip -y
 
+pip3 install fastapi uvicorn mysql-connector-python
+nano main.py
+uvicorn main:app --host 0.0.0.0 --port 8000
+http://<your-ec2-ip>:8000/docs
+db = mysql.connector.connect(
+    host="your-rds-endpoint",
+    user="admin",
+    password="yourpassword",
+    database="AirDB"
+)
+pip3 install boto3
+import boto3
+
+s3 = boto3.client('s3')
+
+s3.upload_file('data.csv', 'your-bucket-name', 'data.csv')
+gcloud init
+gcloud compute instances create air-project
+gcloud compute ssh air-project
