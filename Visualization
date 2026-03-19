@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Quality Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
 
+<h2>🌍 Air Quality Dashboard</h2>
+
+<canvas id="aqiChart" width="400" height="200"></canvas>
+
+<script>
+    async function loadData() {
+        // Fetch data from FastAPI backend
+        const response = await fetch("http://127.0.0.1:8000/air-data");
+        const data = await response.json();
+
+        // Prepare data for chart
+        const cities = data.map(item => item.city);
+        const aqiValues = data.map(item => item.aqi);
+
+        // Create Chart
+        const ctx = document.getElementById('aqiChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: cities,
+                datasets: [{
+                    label: 'AQI Levels',
+                    data: aqiValues
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    }
+
+    loadData();
+</script>
+
+</body>
+</html>
