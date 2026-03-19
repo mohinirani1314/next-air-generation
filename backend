@@ -1,1 +1,82 @@
+pip install fastapi uvicorn mysql-connector-python
+CREATE DATABASE AirDB;
 
+USE AirDB;
+
+CREATE TABLE AirQuality (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    city VARCHAR(50),
+    aqi INT,
+    co FLOAT,
+    no2 FLOAT,
+    so2 FLOAT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+from fastapi import FastAPI
+import mysql.connector
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# 🔹 Database Connection
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="AirDB"
+)
+
+cursor = db.cursor(dictionary=True)
+
+# 🔹 Data Model
+class AirData(BaseModel):
+    city: str
+    aqi: int
+    co: float
+    no2: float
+    so2: float
+
+
+# 🔹 1. Insert Data
+@app.post("/add-air-data")
+def add_air_data(data: AirData):
+    sql = "INSERT INTO AirQuality (city, aqi, co, no2, so2) VALUES (%s, %s, %s, %s, %s)"
+    values = (data.city, data.aqi, data.co, data.no2, data.so2)
+
+    cursor.execute(sql, values)
+    db.commit()
+
+    return {"message": "Data inserted successfully"}
+
+
+# 🔹 2. Get All Data
+@app.get("/air-data")
+def get_all_data():
+    cursor.execute("SELECT * FROM AirQuality ORDER BY created_at DESC")
+    result = cursor.fetchall()
+    return result
+
+
+# 🔹 3. Get Data by City
+@app.get("/air-data/{city}")
+def get_by_city(city: str):
+    sql = "SELECT * FROM AirQuality WHERE city = %s"
+    cursor.execute(sql, (city,))
+    result = cursor.fetchall()
+    return result
+
+
+# 🔹 4. Delete Record
+@app.delete("/delete/{id}")
+def delete_data(id: int):
+    sql = "DELETE FROM AirQuality WHERE id = %s"
+    cursor.execute(sql, (id,))
+    db.commit()
+    return {"message": "Record deleted"}
+{
+  "city": "Hyderabad",
+  "aqi": 120,
+  "co": 0.5,
+  "no2": 30,
+  "so2": 10
+}
