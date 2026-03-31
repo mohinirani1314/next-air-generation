@@ -1,1 +1,28 @@
+-- From supabase.txt (SQL Schema)
+CREATE TABLE public.air_quality (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    city TEXT NOT NULL,
+    station_code TEXT,
+    state TEXT,
+    aqi INT NOT NULL,
+    co FLOAT DEFAULT 0,
+    no2 FLOAT DEFAULT 0,
+    so2 FLOAT DEFAULT 0,
+    pm25 FLOAT DEFAULT 0,
+    pm10 FLOAT DEFAULT 0,
+    ozone FLOAT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
 
+CREATE TABLE public.health_alerts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    city TEXT NOT NULL,
+    aqi INT NOT NULL,
+    alert_message TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('good', 'moderate', 'unhealthy', 'hazardous')),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE public.air_quality ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.health_alerts ENABLE ROW LEVEL SECURITY;
